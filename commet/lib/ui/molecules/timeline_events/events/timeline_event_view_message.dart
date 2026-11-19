@@ -21,6 +21,7 @@ import 'package:commet/ui/molecules/timeline_events/events/timeline_event_view_s
 import 'package:commet/ui/molecules/timeline_events/events/timeline_event_view_thread.dart';
 import 'package:commet/ui/molecules/timeline_events/events/timeline_event_view_url_previews.dart';
 import 'package:commet/ui/molecules/timeline_events/layouts/timeline_event_layout_message.dart';
+import 'package:commet/ui/molecules/translation/translated_message_body.dart';
 import 'package:commet/ui/molecules/timeline_events/timeline_event_layout.dart';
 import 'package:commet/ui/molecules/user_list.dart';
 import 'package:commet/ui/organisms/user_profile/user_profile.dart';
@@ -87,6 +88,7 @@ class _TimelineEventViewMessageState extends State<TimelineEventViewMessage>
   GlobalKey urlPreviewsKey = GlobalKey();
 
   Widget? formattedContent;
+  TimelineEvent? currentEvent;
   String? body;
   String? displayId;
   ImageProvider? senderAvatar;
@@ -144,7 +146,15 @@ class _TimelineEventViewMessageState extends State<TimelineEventViewMessage>
       viaSenderName: viaSenderName,
       senderAvatar: senderAvatar,
       showSender: showSender,
-      formattedContent: formattedContent,
+      formattedContent: currentEvent == null
+          ? formattedContent
+          : TranslatedMessageBody.wrap(
+              original: formattedContent,
+              room: room,
+              event: currentEvent!,
+              timeline: widget.timeline,
+              contentId: displayId,
+            ),
       timestamp: timestampToString(sentTime),
       edited: edited,
       isMentioningSelf:
@@ -248,6 +258,7 @@ class _TimelineEventViewMessageState extends State<TimelineEventViewMessage>
   }
 
   void loadStateFromEvent(TimelineEvent event) {
+    currentEvent = event;
     mentionsRoom = event.mentionsRoom;
     mentions = event.mentions;
     showSender = shouldShowSender(index);

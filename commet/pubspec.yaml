@@ -134,6 +134,7 @@ dependencies:
     git: https://github.com/commetchat/launcher_entry.git
   app_links: ^7.0.0
   win32_registry: ^2.1.0
+  flutter_secure_storage: ^10.3.4
 
 
 dependency_overrides:

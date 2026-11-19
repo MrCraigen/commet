@@ -11,6 +11,8 @@ import 'package:commet/config/global_config.dart';
 import 'package:commet/config/layout_config.dart';
 import 'package:commet/config/platform_utils.dart';
 import 'package:commet/config/preferences.dart';
+import 'package:commet/config/preferences/preference.dart';
+import 'package:commet/client/translation/translation.dart';
 import 'package:commet/config/subplatforms/subplatforms.dart';
 import 'package:commet/debug/l10n_debug_lookup.dart';
 import 'package:commet/debug/log.dart';
@@ -246,6 +248,13 @@ Future<void> initGuiRequirements() async {
   MediaKit.ensureInitialized();
 
   var locale = PlatformDispatcher.instance.locale;
+
+  if (Preference.preferences != null) {
+    await Translation.init(
+      Preference.preferences!,
+      defaultTargetLanguage: locale.languageCode,
+    );
+  }
 
   Future.wait([
     UnicodeEmojis.load(),

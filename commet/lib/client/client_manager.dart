@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:commet/client/alert.dart';
+import 'package:commet/client/translation/translation.dart';
 import 'package:commet/client/call_manager.dart';
 import 'package:commet/client/client.dart';
 import 'package:commet/client/components/direct_messages/direct_message_aggregator.dart';
@@ -233,6 +234,7 @@ class ClientManager {
     }
 
     await client.logout();
+    await Translation.onAccountRemoved(client.identifier);
     onClientRemoved.add(clientInfo);
     _clients.remove(client.identifier);
     _clientsList.removeAt(clientIndex);

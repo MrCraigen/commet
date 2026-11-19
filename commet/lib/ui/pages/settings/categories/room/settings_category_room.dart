@@ -3,6 +3,9 @@ import 'package:commet/client/components/calendar_room/calendar_room_component.d
 import 'package:commet/client/components/emoticon/emoticon_component.dart';
 import 'package:commet/client/matrix/matrix_room.dart';
 import 'package:commet/main.dart';
+import 'package:commet/client/translation/translation.dart';
+import 'package:commet/ui/molecules/translation/translation_strings.dart';
+import 'package:commet/ui/pages/settings/categories/room/translation/translation_scope_settings_page.dart';
 import 'package:commet/ui/pages/settings/categories/room/appearance/room_appearance_settings_page.dart';
 import 'package:commet/ui/pages/settings/categories/room/calendar/room_calendar_settings_page.dart';
 import 'package:commet/ui/pages/settings/categories/room/developer/room_developer_settings_view.dart';
@@ -95,6 +98,14 @@ class SettingsCategoryRoom implements SettingsCategory {
           return RoomAppearanceSettingsPage(room: room);
         },
       ),
+      if (Translation.service != null)
+        SettingsTab(
+          label: TranslationStrings.labelTranslationSettings,
+          icon: Icons.translate,
+          pageBuilder: (context) {
+            return TranslationScopeSettingsPage.room(room);
+          },
+        ),
       SettingsTab(
         label: labelRoomSettingsSecurity,
         icon: Icons.lock,

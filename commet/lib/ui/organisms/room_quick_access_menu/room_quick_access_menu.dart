@@ -10,6 +10,9 @@ import 'package:commet/client/components/widgets/widget_component.dart';
 import 'package:commet/config/layout_config.dart';
 import 'package:commet/config/platform_utils.dart';
 import 'package:commet/main.dart';
+import 'package:commet/client/translation/translation.dart';
+import 'package:commet/ui/molecules/translation/translation_strings.dart';
+import 'package:commet/ui/molecules/translation/translation_ui.dart';
 import 'package:commet/ui/navigation/adaptive_dialog.dart';
 import 'package:commet/ui/organisms/invitation_view/send_invitation.dart';
 import 'package:commet/utils/common_strings.dart';
@@ -85,6 +88,15 @@ class RoomQuickAccessMenu {
             name: CommonStrings.promptSearch,
             action: (context) => EventBus.startSearch.add(null),
             icon: Icons.search,
+          ),
+        if (Translation.isEnabled)
+          RoomQuickAccessMenuEntry(
+            name: TranslationStrings.promptToggleAutoTranslation,
+            action: (context) =>
+                TranslationUi.toggleRoomAutoTranslation(context, room),
+            icon: Translation.adapter!.contextFor(room).policy.autoTranslate
+                ? Icons.translate
+                : Icons.g_translate,
           ),
         if (hasWidgets && !PlatformUtils.isWeb)
           RoomQuickAccessMenuEntry(
