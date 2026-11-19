@@ -289,7 +289,8 @@ class TranslationUi {
         ),
       );
     } else if (!state.isBusy &&
-        state.status != MessageTranslationStatus.sameLanguage) {
+        state.status != MessageTranslationStatus.sameLanguage &&
+        state.skipReason != TranslationSkipReason.noNaturalLanguage) {
       entries.add(
         TimelineEventMenuEntry(
           name: TranslationStrings.promptTranslate,
