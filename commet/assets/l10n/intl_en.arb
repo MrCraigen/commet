@@ -2461,5 +2461,17 @@
   "labelTranslationPrivateRoomBlocked": "Automatic translation needs both \"On\" for this room and your consent below. Space and app settings never apply to private conversations.",
   "@labelTranslationPrivateRoomBlocked": {"description": "Explains why automatic translation is blocked in a protected room", "type": "text", "placeholders": {}},
   "promptToggleAutoTranslation": "Auto-translate",
-  "@promptToggleAutoTranslation": {"description": "Room menu toggle for automatic translation", "type": "text", "placeholders": {}}
+  "@promptToggleAutoTranslation": {"description": "Room menu toggle for automatic translation", "type": "text", "placeholders": {}},
+  "labelTranslationActivityTitle": "Activity",
+  "@labelTranslationActivityTitle": {"description": "Header for translation activity diagnostics", "type": "text", "placeholders": {}},
+  "labelTranslationActivitySummary": "Requests this session: {sent} · succeeded: {ok} · failed: {failed}",
+  "@labelTranslationActivitySummary": {"description": "Summary of translation requests in this session", "type": "text", "placeholders": {"sent": {}, "ok": {}, "failed": {}}},
+  "labelTranslationActivityQueue": "Queued: {queued} · in progress: {active}",
+  "@labelTranslationActivityQueue": {"description": "Current translation queue state", "type": "text", "placeholders": {"queued": {}, "active": {}}},
+  "labelTranslationActivityLastError": "Last error: {error}",
+  "@labelTranslationActivityLastError": {"description": "Most recent translation error", "type": "text", "placeholders": {"error": {}}},
+  "labelTranslationActivityPaused": "Automatic translation is paused: {error}. Run the connection test after fixing it.",
+  "@labelTranslationActivityPaused": {"description": "Shown when automatic translation is blocked by a service wide error", "type": "text", "placeholders": {"error": {}}},
+  "labelTranslationActivityRejected": "Discarded by safety checks: {count}",
+  "@labelTranslationActivityRejected": {"description": "Number of translations discarded by output safety checks", "type": "text", "placeholders": {"count": {}}}
 }

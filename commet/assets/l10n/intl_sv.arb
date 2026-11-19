@@ -372,5 +372,17 @@
     "labelTranslationPrivateRoomBlocked": "Automatisk översättning kräver både \"På\" för det här rummet och ditt samtycke nedan. Utrymmes- och appinställningar gäller aldrig privata konversationer.",
     "@labelTranslationPrivateRoomBlocked": {"description": "Explains why automatic translation is blocked in a protected room", "type": "text", "placeholders": {}},
     "promptToggleAutoTranslation": "Översätt automatiskt",
-    "@promptToggleAutoTranslation": {"description": "Room menu toggle for automatic translation", "type": "text", "placeholders": {}}
+    "@promptToggleAutoTranslation": {"description": "Room menu toggle for automatic translation", "type": "text", "placeholders": {}},
+    "labelTranslationActivityTitle": "Aktivitet",
+    "@labelTranslationActivityTitle": {"description": "Header for translation activity diagnostics", "type": "text", "placeholders": {}},
+    "labelTranslationActivitySummary": "Förfrågningar denna session: {sent} · lyckade: {ok} · misslyckade: {failed}",
+    "@labelTranslationActivitySummary": {"description": "Summary of translation requests in this session", "type": "text", "placeholders": {"sent": {}, "ok": {}, "failed": {}}},
+    "labelTranslationActivityQueue": "I kö: {queued} · pågår: {active}",
+    "@labelTranslationActivityQueue": {"description": "Current translation queue state", "type": "text", "placeholders": {"queued": {}, "active": {}}},
+    "labelTranslationActivityLastError": "Senaste fel: {error}",
+    "@labelTranslationActivityLastError": {"description": "Most recent translation error", "type": "text", "placeholders": {"error": {}}},
+    "labelTranslationActivityPaused": "Automatisk översättning är pausad: {error}. Kör anslutningstestet när felet är åtgärdat.",
+    "@labelTranslationActivityPaused": {"description": "Shown when automatic translation is blocked by a service wide error", "type": "text", "placeholders": {"error": {}}},
+    "labelTranslationActivityRejected": "Förkastade av säkerhetskontroller: {count}",
+    "@labelTranslationActivityRejected": {"description": "Number of translations discarded by output safety checks", "type": "text", "placeholders": {"count": {}}}
 }

@@ -421,4 +421,33 @@ void main() {
     await _settle();
     expect(extraction.content!.text, original);
   });
+
+  test(
+    "all visible messages get translated without further scrolling",
+    () async {
+      var h = await _Harness.create();
+      var refs = [
+        for (var i = 0; i < 15; i++) MessageRef("acc", "!room", "\$v$i"),
+      ];
+      for (var r in refs) {
+        h.service.sync(
+          r,
+          _text("mensaje visible ${r.eventId}"),
+          h.context(auto: true),
+        );
+      }
+      // Reported visible exactly once, like a user who just sits and reads.
+      h.service.setVisible(Object(), refs);
+      await _settle();
+      await _settle();
+      expect(h.requests.length, 15);
+      for (var r in refs) {
+        expect(
+          h.service.currentState(r).hasTranslation,
+          isTrue,
+          reason: r.eventId,
+        );
+      }
+    },
+  );
 }

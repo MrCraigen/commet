@@ -1,4 +1,5 @@
 import 'package:commet/client/translation/matrix_translation_adapter.dart';
+import 'package:commet/debug/log.dart';
 import 'package:commet/client/translation/translation_service.dart';
 import 'package:commet/client/translation/translation_settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,6 +28,7 @@ class Translation {
       settings: settings,
       credentials: SecureTranslationCredentialStore(),
     );
+    service.diagnosticLog = (message) => Log.w(message);
     await service.init();
     _service = service;
     _adapter = MatrixTranslationAdapter(service);

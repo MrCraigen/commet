@@ -531,4 +531,50 @@ class TranslationStrings {
     name: "promptToggleAutoTranslation",
     desc: "Room menu toggle for automatic translation",
   );
+
+  static String get labelTranslationActivityTitle => Intl.message(
+    "Activity",
+    name: "labelTranslationActivityTitle",
+    desc: "Header for translation activity diagnostics",
+  );
+
+  static String labelTranslationActivitySummary(
+    Object sent,
+    Object ok,
+    Object failed,
+  ) => Intl.message(
+    "Requests this session: $sent · succeeded: $ok · failed: $failed",
+    name: "labelTranslationActivitySummary",
+    desc: "Summary of translation requests in this session",
+    args: [sent, ok, failed],
+  );
+
+  static String labelTranslationActivityQueue(Object queued, Object active) =>
+      Intl.message(
+        "Queued: $queued · in progress: $active",
+        name: "labelTranslationActivityQueue",
+        desc: "Current translation queue state",
+        args: [queued, active],
+      );
+
+  static String labelTranslationActivityLastError(Object error) => Intl.message(
+    "Last error: $error",
+    name: "labelTranslationActivityLastError",
+    desc: "Most recent translation error",
+    args: [error],
+  );
+
+  static String labelTranslationActivityPaused(Object error) => Intl.message(
+    "Automatic translation is paused: $error. Run the connection test after fixing it.",
+    name: "labelTranslationActivityPaused",
+    desc: "Shown when automatic translation is blocked by a service wide error",
+    args: [error],
+  );
+
+  static String labelTranslationActivityRejected(Object count) => Intl.message(
+    "Discarded by safety checks: $count",
+    name: "labelTranslationActivityRejected",
+    desc: "Number of translations discarded by output safety checks",
+    args: [count],
+  );
 }

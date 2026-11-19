@@ -22,6 +22,7 @@ class _TranslationSettingsPageState extends State<TranslationSettingsPage> {
   late final TextEditingController urlController;
   final TextEditingController keyController = TextEditingController();
   StreamSubscription? _sub;
+  StreamSubscription? _statsSub;
 
   bool testing = false;
   ConnectionTestResult? lastTest;
@@ -36,11 +37,15 @@ class _TranslationSettingsPageState extends State<TranslationSettingsPage> {
     _sub = service.settings.onChanged.listen((_) {
       if (mounted) setState(() {});
     });
+    _statsSub = service.onStatsChanged.listen((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
     _sub?.cancel();
+    _statsSub?.cancel();
     urlController.dispose();
     keyController.dispose();
     super.dispose();
@@ -109,6 +114,11 @@ class _TranslationSettingsPageState extends State<TranslationSettingsPage> {
           header: TranslationStrings.labelTranslationDefaultsTitle,
           mode: tiamat.TileType.surfaceContainerLow,
           child: _buildDefaults(context),
+        ),
+        tiamat.Panel(
+          header: TranslationStrings.labelTranslationActivityTitle,
+          mode: tiamat.TileType.surfaceContainerLow,
+          child: _buildActivity(context),
         ),
         tiamat.Panel(
           header: TranslationStrings.labelTranslationCacheTitle,
@@ -289,6 +299,51 @@ class _TranslationSettingsPageState extends State<TranslationSettingsPage> {
         if (languageCount > 0)
           tiamat.Text.labelLow(
             TranslationStrings.labelTranslationLanguageCount(languageCount),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildActivity(BuildContext context) {
+    var stats = service.stats;
+    var blocked = service.blockedBy;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (blocked != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              TranslationStrings.labelTranslationActivityPaused(
+                TranslationUi.errorText(blocked),
+              ),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+        tiamat.Text.labelLow(
+          TranslationStrings.labelTranslationActivitySummary(
+            stats.requests,
+            stats.succeeded,
+            stats.failed,
+          ),
+        ),
+        tiamat.Text.labelLow(
+          TranslationStrings.labelTranslationActivityQueue(
+            service.scheduler.queuedCount,
+            service.scheduler.inFlightCount,
+          ),
+        ),
+        if (stats.rejectedOutputs > 0)
+          tiamat.Text.labelLow(
+            TranslationStrings.labelTranslationActivityRejected(
+              stats.rejectedOutputs,
+            ),
+          ),
+        if (stats.lastError != null)
+          tiamat.Text.labelLow(
+            TranslationStrings.labelTranslationActivityLastError(
+              TranslationUi.errorText(stats.lastError),
+            ),
           ),
       ],
     );

@@ -167,6 +167,19 @@ class ConnectionTestResult {
 
 enum ApiKeyStorage { none, secure, sessionOnly }
 
+/// Session counters shown on the settings page. Contains no content.
+class TranslationStats {
+  int requests = 0;
+  int succeeded = 0;
+  int serverCached = 0;
+  int rejectedOutputs = 0;
+  final Map<TranslationErrorKind, int> failures = {};
+  TranslationErrorKind? lastError;
+  DateTime? lastErrorAt;
+
+  int get failed => failures.values.fold(0, (a, b) => a + b);
+}
+
 typedef TranslationProviderFactory = TranslationProvider Function(
   Uri baseUri,
   String apiKey, {
@@ -754,11 +767,41 @@ class TranslationService {
         if (cache.get(key) != null || _activeFailure(key) != null) continue;
         _inFlightContent[key] = content;
         jobs.add((key, content));
+        // Only hand over as many as the queue holds (most relevant first),
+        // the rest follow as soon as earlier ones complete.
+        if (jobs.length >= scheduler.maxQueued) break;
       }
     }
 
     scheduler.updateVisible(owner, jobs);
   }
+
+  bool _resubmitScheduled = false;
+
+  /// After a request completes, top up the queue with the next visible
+  /// messages, without waiting for the user to scroll.
+  void _scheduleResubmit() {
+    if (_resubmitScheduled) return;
+    _resubmitScheduled = true;
+    scheduleMicrotask(() {
+      _resubmitScheduled = false;
+      for (var owner in _visible.keys.toList()) {
+        _submitVisible(owner);
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Diagnostics (counts and error kinds only, never content)
+
+  final TranslationStats stats = TranslationStats();
+  final StreamController<void> _statsChanged = StreamController.broadcast();
+  Stream<void> get onStatsChanged => _statsChanged.stream;
+
+  /// Receives one-line diagnostics without message content or credentials.
+  void Function(String message)? diagnosticLog;
+
+  void _statsUpdated() => _statsChanged.add(null);
 
   // ---------------------------------------------------------------------------
   // Scheduler integration
@@ -770,7 +813,33 @@ class TranslationService {
         const TranslationException(TranslationErrorKind.notConfigured),
       );
     }
-    return provider.translate(request);
+    stats.requests++;
+    _statsUpdated();
+    return provider
+        .translate(request)
+        .then(
+          (r) {
+            stats.succeeded++;
+            if (r.cached) stats.serverCached++;
+            _statsUpdated();
+            return r;
+          },
+          onError: (Object e) {
+            var kind = e is TranslationException
+                ? e.kind
+                : TranslationErrorKind.unknown;
+            var status = e is TranslationException ? e.statusCode : null;
+            stats.failures[kind] = (stats.failures[kind] ?? 0) + 1;
+            stats.lastError = kind;
+            stats.lastErrorAt = DateTime.now();
+            _statsUpdated();
+            diagnosticLog?.call(
+              "Translation request failed: ${kind.name}"
+              "${status != null ? " (HTTP $status)" : ""}",
+            );
+            throw e;
+          },
+        );
   }
 
   void _onSchedulerUpdate(TranslationKey key, TranslationJobUpdate update) {
@@ -794,9 +863,11 @@ class TranslationService {
         );
       case TranslationJobSucceeded(:var result):
         _onSuccess(key, result);
+        _scheduleResubmit();
       case TranslationJobFailed(:var kind):
         _inFlightContent.remove(key);
         _recordFailure(key, kind);
+        _scheduleResubmit();
     }
   }
 
@@ -843,6 +914,11 @@ class TranslationService {
         content,
       );
       if (!sanitized.isOk) {
+        stats.rejectedOutputs++;
+        _statsUpdated();
+        diagnosticLog?.call(
+          "Translation discarded by safety check: ${sanitized.rejection!.name}",
+        );
         _recordFailure(key, TranslationErrorKind.invalidResponse);
         return;
       }
