@@ -3,6 +3,9 @@ import 'package:commet/config/build_config.dart';
 import 'package:commet/config/experiments.dart';
 import 'package:commet/config/platform_utils.dart';
 import 'package:commet/main.dart';
+import 'package:commet/client/translation/translation.dart';
+import 'package:commet/ui/molecules/translation/translation_strings.dart';
+import 'package:commet/ui/pages/settings/categories/app/translation_settings_page.dart';
 import 'package:commet/ui/pages/settings/categories/app/advanced_settings_page.dart';
 import 'package:commet/ui/pages/settings/categories/app/appearance_settings_page.dart';
 import 'package:commet/ui/pages/settings/categories/app/experiments_settings_page.dart';
@@ -97,6 +100,14 @@ class SettingsCategoryApp implements SettingsCategory {
         return const AppearanceSettingsPage();
       },
     ),
+    if (Translation.service != null)
+      SettingsTab(
+        label: TranslationStrings.labelTranslationSettings,
+        icon: m.Icons.translate,
+        pageBuilder: (context) {
+          return const TranslationSettingsPage();
+        },
+      ),
     if (clientManager?.clients.any(
           (e) => e.getComponent<VoipComponent>() != null,
         ) ==

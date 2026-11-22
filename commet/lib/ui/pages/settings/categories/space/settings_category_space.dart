@@ -4,6 +4,9 @@ import 'package:commet/client/matrix/matrix_client.dart';
 import 'package:commet/client/matrix/matrix_room.dart';
 import 'package:commet/client/matrix/matrix_space.dart';
 import 'package:commet/main.dart';
+import 'package:commet/client/translation/translation.dart';
+import 'package:commet/ui/molecules/translation/translation_strings.dart';
+import 'package:commet/ui/pages/settings/categories/room/translation/translation_scope_settings_page.dart';
 import 'package:commet/ui/molecules/user_list.dart';
 import 'package:commet/ui/pages/settings/categories/room/permissions/matrix/matrix_room_permissions_page.dart';
 import 'package:commet/ui/pages/settings/categories/room/security/room_security_settings_page.dart';
@@ -93,6 +96,14 @@ class SettingsCategorySpace implements SettingsCategory {
           return SpaceAppearanceSettingsPage(space: space);
         },
       ),
+      if (Translation.service != null)
+        SettingsTab(
+          label: TranslationStrings.labelTranslationSettings,
+          icon: Icons.translate,
+          pageBuilder: (context) {
+            return TranslationScopeSettingsPage.space(space);
+          },
+        ),
       if (space case MatrixSpace s)
         SettingsTab(
           label: labelSpaceSettingsSecurity,
