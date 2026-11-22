@@ -23,6 +23,8 @@ class RoomAppearanceSettingsView extends StatefulWidget {
     required this.client,
     this.onImagePicked,
     this.onNameChanged,
+    this.namePreference,
+    this.onNamePreferenceChanged,
     this.topic,
     this.setTopic,
     this.canEditName = false,
@@ -38,6 +40,8 @@ class RoomAppearanceSettingsView extends StatefulWidget {
   final Color color;
   final Function(Uint8List bytes, String? mimeType)? onImagePicked;
   final Function(String name)? onNameChanged;
+  final String? namePreference;
+  final Future<void> Function(String)? onNamePreferenceChanged;
   final Future<void> Function(String topic)? setTopic;
   final bool canEditName;
   final bool canEditTopic;
@@ -68,6 +72,43 @@ class _RoomAppearanceSettingsViewState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 8,
       children: [
+        if (widget.namePreference != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                const Expanded(child: Text("Direct message name source")),
+                DropdownButton<String>(
+                  value: widget.namePreference,
+                  items: const [
+                    DropdownMenuItem(value: "auto", child: Text("Automatic")),
+                    DropdownMenuItem(value: "room", child: Text("Room name")),
+                    DropdownMenuItem(
+                      value: "partner",
+                      child: Text("Contact name"),
+                    ),
+                  ],
+                  onChanged: widget.onNamePreferenceChanged == null
+                      ? null
+                      : (value) async {
+                          if (value == null) return;
+                          try {
+                            await widget.onNamePreferenceChanged!(value);
+                          } catch (error) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Could not save name preference: $error",
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                ),
+              ],
+            ),
+          ),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,

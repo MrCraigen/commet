@@ -56,26 +56,77 @@ class MatrixBackgroundRoom implements Room {
     }
   }
 
+  Object? _accountDataEntry(String type, String id) {
+    final record = backgroundClient.accountData.firstWhereOrNull(
+      (entry) => entry.type == type,
+    );
+
+    if (record == null) return null;
+
+    try {
+      final content = jsonDecode(record.content);
+      if (content is Map) {
+        return content[id];
+      }
+    } on FormatException {
+      Log.w("Invalid account data for $type");
+    }
+
+    return null;
+  }
+
   Future<void> init() async {
-    var event = _stateEvents.firstWhereOrNull(
+    final event = _stateEvents.firstWhereOrNull(
       (e) => e.type == matrix.EventTypes.RoomName,
     );
 
-    if (event != null) {
-      displayName = event.content["name"] as String;
-    }
+    final explicitName = event?.content["name"] is String
+        ? event!.content["name"] as String
+        : "";
 
-    var dms = client.getComponent<DirectMessagesComponent>();
+    displayName = explicitName;
+
+    final dms = client.getComponent<DirectMessagesComponent>();
+
     if (dms?.isRoomDirectMessage(this) == true) {
-      var partnerId = dms?.getDirectMessagePartnerId(this);
-      // An explicit room name takes priority over the DM partner name.
-      if (partnerId != null && displayName.isEmpty) {
-        var partner = await fetchMember(partnerId);
-        displayName = partner.displayName;
+      final partnerId = dms?.getDirectMessagePartnerId(this);
+
+      if (partnerId != null) {
+        final rawPreference = _accountDataEntry(
+          "chat.commet.room_name_preferences",
+          identifier,
+        );
+
+        final preference = rawPreference == "room" || rawPreference == "partner"
+            ? rawPreference
+            : "auto";
+
+        final rawPetName = _accountDataEntry("chat.commet.petnames", partnerId);
+
+        final petName = rawPetName is String && rawPetName.trim().isNotEmpty
+            ? rawPetName
+            : null;
+
+        String partnerName = petName ?? "";
+
+        if (partnerName.isEmpty &&
+            (preference == "partner" || explicitName.isEmpty)) {
+          final partner = await fetchMember(partnerId);
+          partnerName = partner.displayName;
+        }
+
+        if (preference == "room") {
+          displayName = explicitName.isNotEmpty ? explicitName : partnerName;
+        } else if (preference == "partner") {
+          displayName = partnerName.isNotEmpty ? partnerName : explicitName;
+        } else {
+          displayName =
+              petName ?? (explicitName.isNotEmpty ? explicitName : partnerName);
+        }
       }
     }
 
-    if (displayName == "") {
+    if (displayName.isEmpty) {
       displayName = identifier;
     }
 

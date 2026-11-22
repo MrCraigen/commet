@@ -217,6 +217,58 @@ class MatrixRoom extends Room {
   Timeline? get timeline => _timeline;
 
   StreamSubscription? _onUpdateSubscription;
+  StreamSubscription? _namePreferenceSubscription;
+
+  static const String _namePreferenceKey = "chat.commet.room_name_preferences";
+
+  String? _pendingNamePreference;
+
+  String get namePreference {
+    final value =
+        _pendingNamePreference ??
+        _matrixRoom.client.accountData[_namePreferenceKey]?.content[_matrixRoom
+            .id];
+
+    if (value is String && (value == "room" || value == "partner")) {
+      return value;
+    }
+    return "auto";
+  }
+
+  Future<void> setNamePreference(String preference) async {
+    if (!{"auto", "room", "partner"}.contains(preference)) {
+      throw ArgumentError.value(preference, "preference");
+    }
+
+    final content = Map<String, dynamic>.from(
+      _matrixRoom.client.accountData[_namePreferenceKey]?.content ?? {},
+    );
+
+    if (preference == "auto") {
+      content.remove(identifier);
+    } else {
+      content[identifier] = preference;
+    }
+
+    final previousPreference = namePreference;
+
+    _pendingNamePreference = preference;
+    _updateDisplayName();
+    _onUpdate.add(null);
+
+    try {
+      await _matrixRoom.client.setAccountData(
+        _matrixRoom.client.userID!,
+        _namePreferenceKey,
+        content,
+      );
+    } catch (_) {
+      _pendingNamePreference = previousPreference;
+      _updateDisplayName();
+      _onUpdate.add(null);
+      rethrow;
+    }
+  }
 
   MatrixRoom(
     MatrixClient client,
@@ -247,6 +299,35 @@ class MatrixRoom extends Room {
     _onUpdateSubscription = _matrixRoom.client.onRoomState.stream
         .where((event) => event.roomId == _matrixRoom.id)
         .listen(onRoomStateUpdated);
+
+    _namePreferenceSubscription = _matrixRoom.client.onSync.stream
+        .where(
+          (update) =>
+              update.accountData?.any(
+                (event) => event.type == _namePreferenceKey,
+              ) ==
+              true,
+        )
+        .listen((_) {
+          final storedValue = _matrixRoom
+              .client
+              .accountData[_namePreferenceKey]
+              ?.content[identifier];
+
+          final storedPreference =
+              storedValue == "room" || storedValue == "partner"
+              ? storedValue
+              : "auto";
+
+          if (_pendingNamePreference != null &&
+              _pendingNamePreference != storedPreference) {
+            return;
+          }
+
+          _pendingNamePreference = null;
+          _updateDisplayName();
+          _onUpdate.add(null);
+        });
 
     _matrixRoom.client.onSync.stream
         .where((i) => i.rooms?.join?.containsKey(_matrixRoom.id) == true)
@@ -743,6 +824,7 @@ class MatrixRoom extends Room {
   Future<void> close() async {
     await _onUpdate.close();
     await _onUpdateSubscription?.cancel();
+    await _namePreferenceSubscription?.cancel();
     await timeline?.close();
   }
 
@@ -890,17 +972,9 @@ class MatrixRoom extends Room {
       var partner = comp!.getDirectMessagePartnerId(this);
 
       if (partner != null) {
-        // Several rooms sharing one DM partner may represent distinct
-        // bridged conversations. Preserve their explicit room names.
-        final hasAnotherRoomWithSamePartner = client.rooms.any(
-          (room) =>
-              room.identifier != identifier &&
-              comp.isRoomDirectMessage(room) &&
-              comp.getDirectMessagePartnerId(room) == partner,
-        );
+        final preference = namePreference;
 
-        if (hasAnotherRoomWithSamePartner &&
-            _matrixRoom.name.trim().isNotEmpty) {
+        if (preference == "room" && _matrixRoom.name.trim().isNotEmpty) {
           _displayName = _matrixRoom.name;
           return;
         }
@@ -916,7 +990,7 @@ class MatrixRoom extends Room {
 
         // Preserve explicit Matrix room names for direct chats.
         // Pet names above still take priority.
-        if (_matrixRoom.name.trim().isNotEmpty) {
+        if (preference != "partner" && _matrixRoom.name.trim().isNotEmpty) {
           return;
         }
 
