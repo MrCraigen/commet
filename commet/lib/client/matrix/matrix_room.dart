@@ -899,6 +899,12 @@ class MatrixRoom extends Room {
           }
         }
 
+        // Preserve explicit Matrix room names for direct chats.
+        // Pet names above still take priority.
+        if (_matrixRoom.name.trim().isNotEmpty) {
+          return;
+        }
+
         var name = matrixRoom
             .unsafeGetUserFromMemoryOrFallback(partner)
             .displayName;
