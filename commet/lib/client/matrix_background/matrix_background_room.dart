@@ -68,7 +68,8 @@ class MatrixBackgroundRoom implements Room {
     var dms = client.getComponent<DirectMessagesComponent>();
     if (dms?.isRoomDirectMessage(this) == true) {
       var partnerId = dms?.getDirectMessagePartnerId(this);
-      if (partnerId != null) {
+      // An explicit room name takes priority over the DM partner name.
+      if (partnerId != null && displayName.isEmpty) {
         var partner = await fetchMember(partnerId);
         displayName = partner.displayName;
       }
