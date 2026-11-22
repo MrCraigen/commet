@@ -890,6 +890,21 @@ class MatrixRoom extends Room {
       var partner = comp!.getDirectMessagePartnerId(this);
 
       if (partner != null) {
+        // Several rooms sharing one DM partner may represent distinct
+        // bridged conversations. Preserve their explicit room names.
+        final hasAnotherRoomWithSamePartner = client.rooms.any(
+          (room) =>
+              room.identifier != identifier &&
+              comp.isRoomDirectMessage(room) &&
+              comp.getDirectMessagePartnerId(room) == partner,
+        );
+
+        if (hasAnotherRoomWithSamePartner &&
+            _matrixRoom.name.trim().isNotEmpty) {
+          _displayName = _matrixRoom.name;
+          return;
+        }
+
         var nicknames = client.getComponent<PetNameComponent>();
         if (nicknames != null) {
           var name = nicknames.getPetName(partner);
