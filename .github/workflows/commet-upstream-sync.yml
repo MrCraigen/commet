@@ -1,0 +1,83 @@
+name: Propose upstream Commet updates
+
+on:
+  schedule:
+    - cron: '17 5 * * 1' # Mondays at 05:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: personal-upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  propose-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out fork default branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch upstream and personal branch
+        run: |
+          git remote add upstream https://github.com/commetchat/commet.git
+          git fetch upstream main
+          git fetch origin personal/main
+
+      - name: Check for changes not yet integrated
+        id: check
+        shell: bash
+        run: |
+          set -euo pipefail
+          upstream_sha="$(git rev-parse upstream/main)"
+          echo "upstream_sha=$upstream_sha" >> "$GITHUB_OUTPUT"
+          if git merge-base --is-ancestor "$upstream_sha" origin/personal/main; then
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+            echo "personal/main already contains upstream/main."
+          else
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare safe merge candidate
+        if: steps.check.outputs.needed == 'true'
+        id: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          upstream_sha="${{ steps.check.outputs.upstream_sha }}"
+          branch="automation/upstream-${upstream_sha:0:12}"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$branch" origin/personal/main
+          if ! git merge --no-edit upstream/main; then
+            echo '::error::Merge conflict. personal/main has not been changed. Resolve manually.'
+            git status --short
+            exit 1
+          fi
+          git push origin "HEAD:refs/heads/$branch"
+
+      - name: Create review PR (never auto-merge)
+        if: steps.check.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.candidate.outputs.branch }}
+          UPSTREAM_SHA: ${{ steps.check.outputs.upstream_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          existing="$(gh pr list --repo "$GITHUB_REPOSITORY" --state all --base personal/main --head "$BRANCH" --json number --jq 'length')"
+          if [ "$existing" != "0" ]; then
+            echo "A PR for this upstream revision already exists."
+            exit 0
+          fi
+          gh pr create \
+            --repo "$GITHUB_REPOSITORY" \
+            --base personal/main \
+            --head "$BRANCH" \
+            --title "chore: merge upstream Commet ${UPSTREAM_SHA:0:12}" \
+            --body "Automated proposal to merge commetchat/commet main into personal/main.\n\n**Review before merging:** verify message translation, DM room-name preferences, Flutter tests, and Linux build.\n\nThis automation does not auto-merge. If the merge has conflicts, the workflow fails without modifying personal/main."
