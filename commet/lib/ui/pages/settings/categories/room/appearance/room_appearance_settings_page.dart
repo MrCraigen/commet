@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:commet/client/room.dart';
+import 'package:commet/client/matrix/matrix_room.dart';
 import 'package:commet/ui/pages/settings/categories/room/appearance/room_appearance_settings_view.dart';
 import 'package:flutter/widgets.dart';
 
@@ -46,11 +47,25 @@ class _RoomAppearanceSettingsPageState
       setTopic: widget.room.setTopic,
       onImagePicked: setRoomAvatar,
       onNameChanged: setRoomName,
+      namePreference:
+          widget.room is MatrixRoom &&
+              (widget.room as MatrixRoom).matrixRoom.isDirectChat
+          ? (widget.room as MatrixRoom).namePreference
+          : null,
+      onNamePreferenceChanged:
+          widget.room is MatrixRoom &&
+              (widget.room as MatrixRoom).matrixRoom.isDirectChat
+          ? setNamePreference
+          : null,
     );
   }
 
   void setRoomAvatar(Uint8List bytes, String? mimeType) {
     widget.room.setRoomAvatar(bytes, mimeType);
+  }
+
+  Future<void> setNamePreference(String value) async {
+    await (widget.room as MatrixRoom).setNamePreference(value);
   }
 
   void setRoomName(String name) {
